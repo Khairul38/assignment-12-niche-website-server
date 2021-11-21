@@ -3,6 +3,7 @@ const { MongoClient } = require('mongodb');
 const cors = require('cors');
 const ObjectId = require('mongodb').ObjectId;
 require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -43,6 +44,15 @@ async function run() {
             const orders = await cursor.toArray();
             res.send(orders);
         })
+
+        // Get Order API for Pay
+        app.get('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await orderCollection.findOne(query);
+            res.json(result);
+        })
+
         // Get Admin User API
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email;
@@ -52,7 +62,7 @@ async function run() {
             if (user?.role === 'admin') {
                 isAdmin = true;
             }
-            res.json({admin: isAdmin});
+            res.json({ admin: isAdmin });
         });
 
         // Post Product API
@@ -63,7 +73,7 @@ async function run() {
         });
 
         // Post Review API
-        app.post('/reviews', async (req,res) => {
+        app.post('/reviews', async (req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review);
             res.json(result);
@@ -117,10 +127,24 @@ async function run() {
             res.json(result);
         })
 
-        // Delete Product Api
-        app.delete('/products/:id', async (req,res) => {
+        // Update Order Payment API
+        app.put('/orders/:id/payment', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)};
+            const payment = req.body;
+            const filter = {_id: ObjectId(id)};
+            const updateDoc = {
+                $set: {
+                    payment: payment
+                }
+            }
+            const result = await orderCollection.updateOne(filter, updateDoc);
+            res.json(result);
+        })
+
+        // Delete Product Api
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
             const result = await productCollection.deleteOne(query);
             res.json(result);
         })
@@ -131,6 +155,17 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
             res.json(result);
+        })
+
+        app.post('/create-payment-intent', async (req, res) => {
+            const paymentInfo = req.body;
+            const amount = paymentInfo.price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            })
+            res.json({ clientSecret: paymentIntent.client_secret })
         })
     }
     finally {
