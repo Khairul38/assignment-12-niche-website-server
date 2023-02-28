@@ -1,12 +1,12 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
 const cors = require('cors');
+const { MongoClient } = require('mongodb');
 const ObjectId = require('mongodb').ObjectId;
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
-const app = express();
 const port = process.env.PORT || 5000;
+const app = express();
 
 // Middleware
 app.use(cors());
