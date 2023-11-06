@@ -70,17 +70,22 @@ async function run() {
 
     // Post Product API
     app.post("/products", async (req, res) => {
-      const imgData = req.files.image.data;
-      const encodedImg = imgData.toString("base64");
-      const imgBuffer = Buffer.from(encodedImg, "base64");
-      const product = {
-        ...req.body,
-        image: imgBuffer,
-      };
-      // const product = req.body;
+      const product = req.body;
       const result = await productCollection.insertOne(product);
       res.json(result);
     });
+    // app.post("/products", async (req, res) => {
+    //   const imgData = req.files.image.data;
+    //   const encodedImg = imgData.toString("base64");
+    //   const imgBuffer = Buffer.from(encodedImg, "base64");
+    //   const product = {
+    //     ...req.body,
+    //     image: imgBuffer,
+    //   };
+    //   // const product = req.body;
+    //   const result = await productCollection.insertOne(product);
+    //   res.json(result);
+    // });
 
     // Post Review API
     app.post("/reviews", async (req, res) => {
@@ -91,6 +96,7 @@ async function run() {
 
     // Post Order API
     app.post("/orders", async (req, res) => {
+      console.log(req.body)
       const order = req.body;
       const result = await orderCollection.insertOne(order);
       res.json(result);
